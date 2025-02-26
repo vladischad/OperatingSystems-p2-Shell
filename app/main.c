@@ -89,12 +89,12 @@ int main(int argc, char *argv[])
             if (rval == -1)
             {
                 fprintf(stderr, "Wait pid failed with -1\n");
-		explain_waitpid(status);
+		        explain_waitpid(status);
             }
             cmd_free(cmd);
             // get control of the shell
             tcsetpgrp(sh.shell_terminal, sh.shell_pgid);
         }
     }
-    exit(EXIT_SUCCESS);
+    sh_destroy(&sh);
 }
