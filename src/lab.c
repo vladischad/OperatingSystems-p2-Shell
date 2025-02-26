@@ -1,3 +1,10 @@
+/**
+ * lab.c
+ * Implementation of a simple shell program with basic command parsing, built-in commands, and process execution.
+ * 
+ * @author Vladyslav (Vlad) Maliutin
+ */
+
 #include "lab.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +20,13 @@
 
 #define ARG_MAX sysconf(_SC_ARG_MAX)
 
+/**
+ * @brief Parses command-line arguments passed when launching the shell.
+ * If the '-v' flag is detected, it prints the shell version and exits.
+ *
+ * @param argc Number of arguments.
+ * @param argv Argument array.
+ */
 void parse_args(int argc, char **argv) {
     int opt;
     while ((opt = getopt(argc, argv, "v")) != -1) {
@@ -23,6 +37,13 @@ void parse_args(int argc, char **argv) {
     }
 }
 
+/**
+ * @brief Retrieves the shell prompt string from an environment variable.
+ * If the variable is not set, it defaults to "shell> ".
+ *
+ * @param env Environment variable name.
+ * @return Dynamically allocated prompt string (must be freed by caller).
+ */
 char *get_prompt(const char *env) {
     char *prompt = getenv(env);
     if (prompt == NULL) {
@@ -31,6 +52,12 @@ char *get_prompt(const char *env) {
     return strdup(prompt);
 }
 
+/**
+ * @brief Parses a command line into an array of arguments.
+ *
+ * @param line Input command string.
+ * @return Dynamically allocated argument array (must be freed using cmd_free).
+ */
 char **cmd_parse(const char *line) {
     char **cmd = malloc(ARG_MAX * sizeof(char *));
     if (!cmd) return NULL;
@@ -49,6 +76,11 @@ char **cmd_parse(const char *line) {
     return cmd;
 }
 
+/**
+ * @brief Frees the memory allocated for a parsed command.
+ *
+ * @param cmd Command argument array.
+ */
 void cmd_free(char **cmd) {
     if (!cmd) return;
     for (int i = 0; cmd[i] != NULL; i++) {
@@ -57,6 +89,12 @@ void cmd_free(char **cmd) {
     free(cmd);
 }
 
+/**
+ * @brief Trims leading and trailing whitespace from a string.
+ *
+ * @param line Input string.
+ * @return Pointer to the trimmed string.
+ */
 char *trim_white(char *line) {
     while (isspace((unsigned char)*line)) line++;
     if (*line == 0) return line;
@@ -66,6 +104,13 @@ char *trim_white(char *line) {
     return line;
 }
 
+/**
+ * @brief Changes the current working directory.
+ * Defaults to the home directory if no argument is given.
+ *
+ * @param args Argument array (expects "cd [directory]").
+ * @return 0 on success, -1 on failure.
+ */
 int change_dir(char **args) {
     if (args[1] == NULL) {
         const char *home = getenv("HOME");
@@ -84,6 +129,13 @@ int change_dir(char **args) {
     return 0;
 }
 
+/**
+ * @brief Checks and executes built-in shell commands.
+ *
+ * @param sh Shell instance.
+ * @param argv Parsed command arguments.
+ * @return True if the command was executed, false otherwise.
+ */
 bool do_builtin(struct shell *sh, char **argv) {
     if (!argv[0]) return false;
 
@@ -104,6 +156,11 @@ bool do_builtin(struct shell *sh, char **argv) {
     return false;
 }
 
+/**
+ * @brief Initializes the shell process, sets up terminal control, and ignores signals.
+ *
+ * @param sh Shell instance.
+ */
 void sh_init(struct shell *sh) {
     sh->shell_terminal = STDIN_FILENO;
     sh->shell_is_interactive = isatty(sh->shell_terminal);
@@ -128,10 +185,20 @@ void sh_init(struct shell *sh) {
     sh->prompt = get_prompt("MY_PROMPT");
 }
 
+/**
+ * @brief Frees shell resources before exit.
+ *
+ * @param sh Shell instance.
+ */
 void sh_destroy(struct shell *sh) {
     free(sh->prompt);
 }
 
+/**
+ * @brief Executes a given command using fork and execvp.
+ *
+ * @param cmd Parsed command arguments.
+ */
 void execute_command(char **cmd) {
     if (!cmd || !cmd[0]) return;
 
